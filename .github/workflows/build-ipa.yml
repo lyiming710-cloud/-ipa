@@ -56,6 +56,131 @@ jobs:
           echo '--- .NET project files ---'
           find decompiled_project -maxdepth 3 \( -name '*.sln' -o -name '*.csproj' \) -print | sort || true
 
+      - name: Sanitize recovered Godot resources
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p build/quarantine
+          rm -rf decompiled_project/.godot
+
+          python3 - decompiled_project build <<'PY'
+          from pathlib import Path
+          import shutil
+          import struct
+          import sys
+
+          project = Path(sys.argv[1]).resolve()
+          build = Path(sys.argv[2]).resolve()
+          quarantine = build / "quarantine"
+          quarantine.mkdir(parents=True, exist_ok=True)
+          report = []
+
+          markers = {
+              ".tscn": b"[gd_scene",
+              ".tres": b"[gd_resource",
+              ".gdc": b"GDSC",
+              ".res": b"RSRC",
+              ".scn": b"RSRC",
+              ".png": b"\x89PNG\r\n\x1a\n",
+              ".jpg": b"\xff\xd8\xff",
+              ".jpeg": b"\xff\xd8\xff",
+              ".ogg": b"OggS",
+              ".ico": b"\x00\x00\x01\x00",
+              ".glb": b"glTF",
+          }
+
+          def quarantine_file(path: Path, reason: str) -> None:
+              rel = path.relative_to(project)
+              dst = quarantine / rel
+              dst.parent.mkdir(parents=True, exist_ok=True)
+              shutil.move(str(path), str(dst))
+              report.append(f"QUARANTINE {rel}: {reason}")
+
+          def trim_png(data: bytes) -> bytes:
+              if not data.startswith(b"\x89PNG\r\n\x1a\n"):
+                  return data
+              pos = 8
+              while pos + 12 <= len(data):
+                  length = struct.unpack(">I", data[pos:pos + 4])[0]
+                  end = pos + 12 + length
+                  if end > len(data):
+                      return data
+                  chunk_type = data[pos + 4:pos + 8]
+                  if chunk_type == b"IEND":
+                      return data[:end]
+                  pos = end
+              return data
+
+          def find_riff(data: bytes, form: bytes) -> int:
+              start = 0
+              while True:
+                  idx = data.find(b"RIFF", start)
+                  if idx < 0:
+                      return -1
+                  if idx + 12 <= len(data) and data[idx + 8:idx + 12] == form:
+                      return idx
+                  start = idx + 1
+
+          project_binary = project / "project.binary"
+          if project_binary.exists():
+              quarantine_file(
+                  project_binary,
+                  "invalid recovered binary project config; project.godot is authoritative",
+              )
+
+          for path in sorted(project.rglob("*")):
+              if not path.is_file():
+                  continue
+
+              rel = path.relative_to(project)
+              ext = path.suffix.lower()
+              data = path.read_bytes()
+
+              marker = markers.get(ext)
+              if marker is not None:
+                  idx = data.find(marker)
+                  if idx < 0:
+                      quarantine_file(path, f"expected {marker!r} header not found")
+                      continue
+
+                  fixed = data[idx:]
+                  if ext == ".png":
+                      fixed = trim_png(fixed)
+
+                  if idx != 0 or fixed != data:
+                      path.write_bytes(fixed)
+                      report.append(
+                          f"FIX {rel}: stripped {idx} prefix byte(s)"
+                          + (f" and {len(data) - idx - len(fixed)} trailing byte(s)" if len(fixed) != len(data) - idx else "")
+                      )
+                  continue
+
+              if ext in {".wav", ".webp"}:
+                  form = b"WAVE" if ext == ".wav" else b"WEBP"
+                  idx = find_riff(data, form)
+                  if idx < 0:
+                      quarantine_file(path, f"valid RIFF/{form.decode()} header not found")
+                  elif idx != 0:
+                      path.write_bytes(data[idx:])
+                      report.append(f"FIX {rel}: stripped {idx} prefix byte(s)")
+                  continue
+
+              if ext == ".gd":
+                  # Source GDScript should be text. Binary/tokenized scripts belong in .gdc.
+                  if b"\x00" in data:
+                      quarantine_file(path, "NUL bytes found in GDScript source")
+                      continue
+                  try:
+                      data.decode("utf-8")
+                  except UnicodeDecodeError:
+                      quarantine_file(path, "GDScript source is not valid UTF-8")
+
+          report_path = build / "sanitize-report.txt"
+          report_path.write_text("\n".join(report) + ("\n" if report else "No repairs needed.\n"), encoding="utf-8")
+          print(report_path.read_text(encoding="utf-8"))
+          print(f"Sanitizer actions: {len(report)}")
+          PY
+
       - name: Export Xcode Project
         id: godot_export
         shell: bash
@@ -88,6 +213,8 @@ jobs:
           path: |
             build/godot-export.log
             build/xcode-project-list.log
+            build/sanitize-report.txt
+            build/quarantine
             decompiled_project/export_presets.cfg
             decompiled_project/project.godot
           if-no-files-found: warn
