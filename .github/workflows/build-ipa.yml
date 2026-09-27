@@ -38,13 +38,40 @@ jobs:
 
           TEMPLATE_DIR="$HOME/Library/Application Support/Godot/export_templates/4.7.stable.mono"
           mkdir -p "$TEMPLATE_DIR"
-          cp -R export_templates_extracted/templates/. "$TEMPLATE_DIR/"
+          if [ -d export_templates_extracted/templates ]; then
+            cp -R export_templates_extracted/templates/. "$TEMPLATE_DIR/"
+          fi
+
+          echo '--- extracted Apple export template candidates ---'
+          find export_templates_extracted -type f \( -iname 'ios.zip' -o -iname 'iphone.zip' \) -print | sort || true
+          echo '--- installed export template files ---'
+          find "$TEMPLATE_DIR" -maxdepth 2 -type f -print | sort || true
+
+          IOS_TEMPLATE=$(find "$TEMPLATE_DIR" -type f -iname 'ios.zip' -print -quit 2>/dev/null || true)
+          if [ -z "$IOS_TEMPLATE" ]; then
+            IOS_TEMPLATE=$(find export_templates_extracted -type f -iname 'ios.zip' -print -quit 2>/dev/null || true)
+          fi
+          if [ -z "$IOS_TEMPLATE" ]; then
+            IOS_TEMPLATE=$(find "$TEMPLATE_DIR" export_templates_extracted -type f -iname 'iphone.zip' -print -quit 2>/dev/null || true)
+          fi
+          if [ -z "$IOS_TEMPLATE" ]; then
+            echo 'ERROR: Godot 4.7 Mono template archive does not contain ios.zip/iphone.zip.' >&2
+            exit 20
+          fi
+
+          if [ "$IOS_TEMPLATE" != "$TEMPLATE_DIR/ios.zip" ]; then
+            cp "$IOS_TEMPLATE" "$TEMPLATE_DIR/ios.zip"
+          fi
+          test -s "$TEMPLATE_DIR/ios.zip"
+          unzip -tq "$TEMPLATE_DIR/ios.zip"
+          ls -lh "$TEMPLATE_DIR/ios.zip"
 
           GODOT_BIN=$(find "$PWD/godot_editor" -type f -path "*/Contents/MacOS/Godot*" | head -n 1)
           test -n "$GODOT_BIN"
           chmod +x "$GODOT_BIN"
           echo "GODOT_BIN=$GODOT_BIN" >> "$GITHUB_ENV"
           "$GODOT_BIN" --version
+          dotnet --info
 
       - name: Inspect Godot project
         run: |
@@ -65,6 +92,7 @@ jobs:
 
           python3 - decompiled_project build <<'PY'
           from pathlib import Path
+          import json
           import shutil
           import struct
           import sys
@@ -129,6 +157,22 @@ jobs:
                   "invalid recovered binary project config; project.godot is authoritative",
               )
 
+          # Recovered *.import files are generated cache metadata, not source assets.
+          # Several are binary-prefixed/truncated, so let Godot 4.7 regenerate them.
+          import_sidecars = sorted(project.rglob("*.import"))
+          for path in import_sidecars:
+              path.unlink()
+          report.append(f"REMOVE_GENERATED_IMPORT_SIDECARS count={len(import_sidecars)}")
+
+          # The recovered global.json is corrupt in the current tree. Do not let a
+          # damaged SDK selector affect Godot's .NET discovery in CI.
+          global_json = project / "global.json"
+          if global_json.exists():
+              try:
+                  json.loads(global_json.read_text(encoding="utf-8"))
+              except Exception as exc:
+                  quarantine_file(global_json, f"invalid global.json: {type(exc).__name__}")
+
           for path in sorted(project.rglob("*")):
               if not path.is_file():
                   continue
@@ -171,7 +215,6 @@ jobs:
                   continue
 
               if ext == ".gd":
-                  # Source GDScript should be text. Binary/tokenized scripts belong in .gdc.
                   if b"\x00" in data:
                       quarantine_file(path, "NUL bytes found in GDScript source")
                       continue
@@ -182,8 +225,12 @@ jobs:
 
           report_path = build / "sanitize-report.txt"
           report_path.write_text("\n".join(report) + ("\n" if report else "No repairs needed.\n"), encoding="utf-8")
-          print(report_path.read_text(encoding="utf-8"))
           print(f"Sanitizer actions: {len(report)}")
+          print("--- sanitizer report preview ---")
+          for line in report[:200]:
+              print(line)
+          if len(report) > 200:
+              print(f"... {len(report) - 200} additional actions are in build/sanitize-report.txt")
           PY
 
       - name: Configure unsigned iOS project export
@@ -201,9 +248,6 @@ jobs:
           if options_header not in text:
               raise SystemExit("iOS preset options section not found")
 
-          # Godot requires a syntactically valid 10-character Team ID even when
-          # we only generate an Xcode project. This placeholder is never used
-          # for signing; the Xcode build below explicitly disables code signing.
           if not re.search(r"(?m)^application/app_store_team_id=", text):
               text = text.replace(
                   options_header,
