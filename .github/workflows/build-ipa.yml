@@ -186,6 +186,48 @@ jobs:
           print(f"Sanitizer actions: {len(report)}")
           PY
 
+      - name: Configure unsigned iOS project export
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python3 - decompiled_project/export_presets.cfg <<'PY'
+          from pathlib import Path
+          import re
+          import sys
+
+          path = Path(sys.argv[1])
+          text = path.read_text(encoding="utf-8")
+          options_header = "[preset.0.options]"
+          if options_header not in text:
+              raise SystemExit("iOS preset options section not found")
+
+          # Godot requires a syntactically valid 10-character Team ID even when
+          # we only generate an Xcode project. This placeholder is never used
+          # for signing; the Xcode build below explicitly disables code signing.
+          if not re.search(r"(?m)^application/app_store_team_id=", text):
+              text = text.replace(
+                  options_header,
+                  options_header + '\n\napplication/app_store_team_id="AAAAAAAAAA"',
+                  1,
+              )
+
+          key = "application/export_project_only"
+          if re.search(rf"(?m)^{re.escape(key)}=", text):
+              text = re.sub(rf"(?m)^{re.escape(key)}=.*$", key + "=true", text, count=1)
+          else:
+              text = text.replace(
+                  options_header,
+                  options_header + "\n\n" + key + "=true",
+                  1,
+              )
+
+          path.write_text(text, encoding="utf-8")
+          print("--- CI iOS export overrides ---")
+          for line in text.splitlines():
+              if line.startswith("application/app_store_team_id=") or line.startswith("application/export_project_only="):
+                  print(line)
+          PY
+
       - name: Export Xcode Project
         id: godot_export
         shell: bash
@@ -235,7 +277,8 @@ jobs:
             archive \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY=""
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM=""
 
       - name: Package IPA
         run: |
