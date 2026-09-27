@@ -46,14 +46,51 @@ jobs:
           echo "GODOT_BIN=$GODOT_BIN" >> "$GITHUB_ENV"
           "$GODOT_BIN" --version
 
-      - name: Export Xcode Project
+      - name: Inspect Godot project
         run: |
           set -euxo pipefail
+          test -f decompiled_project/project.godot
+          test -f decompiled_project/export_presets.cfg
+          echo '--- export_presets.cfg ---'
+          cat decompiled_project/export_presets.cfg
+          echo '--- .NET project files ---'
+          find decompiled_project -maxdepth 3 \( -name '*.sln' -o -name '*.csproj' \) -print | sort || true
+
+      - name: Export Xcode Project
+        id: godot_export
+        shell: bash
+        run: |
+          set -uo pipefail
           mkdir -p build
+          set +e
           "$GODOT_BIN" --headless --verbose --path decompiled_project \
-            --export-release "iOS" "$PWD/build/PlantsVsZombies.xcodeproj"
+            --export-release "iOS" "$PWD/build/PlantsVsZombies.xcodeproj" \
+            2>&1 | tee "$PWD/build/godot-export.log"
+          EXPORT_STATUS=${PIPESTATUS[0]}
+          set -e
+
+          echo "Godot export exit code: $EXPORT_STATUS"
+          echo '--- build output ---'
+          find build -maxdepth 4 -print | sort | head -n 500 || true
+
+          if [ "$EXPORT_STATUS" -ne 0 ]; then
+            exit "$EXPORT_STATUS"
+          fi
+
           test -d build/PlantsVsZombies.xcodeproj
-          xcodebuild -list -project build/PlantsVsZombies.xcodeproj
+          xcodebuild -list -project build/PlantsVsZombies.xcodeproj 2>&1 | tee build/xcode-project-list.log
+
+      - name: Upload export diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-diagnostics-${{ github.run_number }}
+          path: |
+            build/godot-export.log
+            build/xcode-project-list.log
+            decompiled_project/export_presets.cfg
+            decompiled_project/project.godot
+          if-no-files-found: warn
 
       - name: Build Xcode Project (Unsigned)
         run: |
@@ -71,6 +108,7 @@ jobs:
       - name: Package IPA
         run: |
           set -euxo pipefail
+          rm -rf Payload
           mkdir -p Payload
           cp -R build/archive.xcarchive/Products/Applications/*.app Payload/
           zip -r PlantsVsZombies_Hybrid_v0.29.0.ipa Payload
