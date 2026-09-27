@@ -25,35 +25,44 @@ jobs:
 
       - name: Setup Godot Engine & Export Templates
         run: |
-          echo "Downloading Godot 4.3 stable mono..."
-          curl -L -o godot_mono_mac.zip https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_mono_macos.zip
-          unzip -q godot_mono_mac.zip
+          set -euxo pipefail
+          echo "Downloading Godot 4.3 stable Mono for macOS..."
+          curl -fL --retry 3 -o godot_mono_mac.zip \
+            https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_mono_macos.universal.zip
+          unzip -q godot_mono_mac.zip -d godot_editor
 
-          echo "Downloading Godot 4.3 export templates..."
-          curl -L -o export_templates.tpz https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_mono_export_templates.tpz
+          echo "Downloading Godot 4.3 Mono export templates..."
+          curl -fL --retry 3 -o export_templates.tpz \
+            https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_mono_export_templates.tpz
           unzip -q export_templates.tpz -d export_templates_extracted
 
           TEMPLATE_DIR="$HOME/Library/Application Support/Godot/export_templates/4.3.stable.mono"
           mkdir -p "$TEMPLATE_DIR"
-          cp -R export_templates_extracted/templates/* "$TEMPLATE_DIR/"
-          
-          # Find Godot binary
-          find . -name "Godot" -type f -perm +111
+          cp -R export_templates_extracted/templates/. "$TEMPLATE_DIR/"
+
+          GODOT_BIN=$(find "$PWD/godot_editor" -type f -path "*/Contents/MacOS/Godot*" | head -n 1)
+          test -n "$GODOT_BIN"
+          chmod +x "$GODOT_BIN"
+          echo "GODOT_BIN=$GODOT_BIN" >> "$GITHUB_ENV"
+          "$GODOT_BIN" --version
 
       - name: Export Xcode Project
         run: |
+          set -euxo pipefail
           mkdir -p build
-          GODOT_BIN=$(find . -name "Godot" -path "*/Contents/MacOS/*" -type f | head -n 1)
-          echo "Using Godot binary: $GODOT_BIN"
-          "$GODOT_BIN" --headless --path decompiled_project --export-release "iOS" build/PlantsVsZombies.xcodeproj
+          "$GODOT_BIN" --headless --verbose --path decompiled_project \
+            --export-release "iOS" "$PWD/build/PlantsVsZombies.xcodeproj"
+          test -d build/PlantsVsZombies.xcodeproj
+          xcodebuild -list -project build/PlantsVsZombies.xcodeproj
 
       - name: Build Xcode Project (Unsigned)
         run: |
+          set -euxo pipefail
           xcodebuild -project build/PlantsVsZombies.xcodeproj \
             -scheme PlantsVsZombies \
             -configuration Release \
             -sdk iphoneos \
-            -archivePath $PWD/build/archive.xcarchive \
+            -archivePath "$PWD/build/archive.xcarchive" \
             archive \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
@@ -61,9 +70,11 @@ jobs:
 
       - name: Package IPA
         run: |
+          set -euxo pipefail
           mkdir -p Payload
           cp -R build/archive.xcarchive/Products/Applications/*.app Payload/
           zip -r PlantsVsZombies_Hybrid_v0.29.0.ipa Payload
+          ls -lh PlantsVsZombies_Hybrid_v0.29.0.ipa
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
