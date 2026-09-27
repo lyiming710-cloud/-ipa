@@ -26,17 +26,17 @@ jobs:
       - name: Setup Godot Engine & Export Templates
         run: |
           set -euxo pipefail
-          echo "Downloading Godot 4.3 stable Mono for macOS..."
+          echo "Downloading Godot 4.7 stable Mono for macOS..."
           curl -fL --retry 3 -o godot_mono_mac.zip \
-            https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_mono_macos.universal.zip
+            https://github.com/godotengine/godot/releases/download/4.7-stable/Godot_v4.7-stable_mono_macos.universal.zip
           unzip -q godot_mono_mac.zip -d godot_editor
 
-          echo "Downloading Godot 4.3 Mono export templates..."
+          echo "Downloading Godot 4.7 Mono export templates..."
           curl -fL --retry 3 -o export_templates.tpz \
-            https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_mono_export_templates.tpz
+            https://github.com/godotengine/godot/releases/download/4.7-stable/Godot_v4.7-stable_mono_export_templates.tpz
           unzip -q export_templates.tpz -d export_templates_extracted
 
-          TEMPLATE_DIR="$HOME/Library/Application Support/Godot/export_templates/4.3.stable.mono"
+          TEMPLATE_DIR="$HOME/Library/Application Support/Godot/export_templates/4.7.stable.mono"
           mkdir -p "$TEMPLATE_DIR"
           cp -R export_templates_extracted/templates/. "$TEMPLATE_DIR/"
 
@@ -96,20 +96,21 @@ jobs:
               shutil.move(str(path), str(dst))
               report.append(f"QUARANTINE {rel}: {reason}")
 
-          def trim_png(data: bytes) -> bytes:
-              if not data.startswith(b"\x89PNG\r\n\x1a\n"):
-                  return data
-              pos = 8
+          def normalize_png(data: bytes):
+              signature = b"\x89PNG\r\n\x1a\n"
+              if not data.startswith(signature):
+                  return None
+              pos = len(signature)
               while pos + 12 <= len(data):
                   length = struct.unpack(">I", data[pos:pos + 4])[0]
                   end = pos + 12 + length
                   if end > len(data):
-                      return data
+                      return None
                   chunk_type = data[pos + 4:pos + 8]
                   if chunk_type == b"IEND":
                       return data[:end]
                   pos = end
-              return data
+              return None
 
           def find_riff(data: bytes, form: bytes) -> int:
               start = 0
@@ -145,7 +146,11 @@ jobs:
 
                   fixed = data[idx:]
                   if ext == ".png":
-                      fixed = trim_png(fixed)
+                      normalized = normalize_png(fixed)
+                      if normalized is None:
+                          quarantine_file(path, "PNG is truncated/corrupt after recovered signature")
+                          continue
+                      fixed = normalized
 
                   if idx != 0 or fixed != data:
                       path.write_bytes(fixed)
