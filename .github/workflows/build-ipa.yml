@@ -65,6 +65,7 @@ jobs:
           test -s "$TEMPLATE_DIR/ios.zip"
           unzip -tq "$TEMPLATE_DIR/ios.zip"
           ls -lh "$TEMPLATE_DIR/ios.zip"
+          echo "IOS_TEMPLATE_PATH=$TEMPLATE_DIR/ios.zip" >> "$GITHUB_ENV"
 
           GODOT_BIN=$(find "$PWD/godot_editor" -type f -path "*/Contents/MacOS/Godot*" | head -n 1)
           test -n "$GODOT_BIN"
@@ -237,38 +238,41 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          python3 - decompiled_project/export_presets.cfg <<'PY'
+          test -s "$IOS_TEMPLATE_PATH"
+          python3 - decompiled_project/export_presets.cfg "$IOS_TEMPLATE_PATH" <<'PY'
           from pathlib import Path
           import re
           import sys
 
           path = Path(sys.argv[1])
+          ios_template = Path(sys.argv[2]).resolve().as_posix()
           text = path.read_text(encoding="utf-8")
           options_header = "[preset.0.options]"
           if options_header not in text:
               raise SystemExit("iOS preset options section not found")
 
-          if not re.search(r"(?m)^application/app_store_team_id=", text):
-              text = text.replace(
-                  options_header,
-                  options_header + '\n\napplication/app_store_team_id="AAAAAAAAAA"',
-                  1,
-              )
+          def set_option(key: str, value: str) -> None:
+              global text
+              line = f"{key}={value}"
+              if re.search(rf"(?m)^{re.escape(key)}=", text):
+                  text = re.sub(rf"(?m)^{re.escape(key)}=.*$", lambda _: line, text, count=1)
+              else:
+                  text = text.replace(options_header, options_header + "\n\n" + line, 1)
 
-          key = "application/export_project_only"
-          if re.search(rf"(?m)^{re.escape(key)}=", text):
-              text = re.sub(rf"(?m)^{re.escape(key)}=.*$", key + "=true", text, count=1)
-          else:
-              text = text.replace(
-                  options_header,
-                  options_header + "\n\n" + key + "=true",
-                  1,
-              )
+          set_option("application/app_store_team_id", '"AAAAAAAAAA"')
+          set_option("application/export_project_only", "true")
+          # Explicitly bind the exact validated template. This bypasses any
+          # discrepancy between CI filesystem layout and EditorPaths template lookup.
+          set_option("custom_template/release", f'"{ios_template}"')
 
           path.write_text(text, encoding="utf-8")
           print("--- CI iOS export overrides ---")
           for line in text.splitlines():
-              if line.startswith("application/app_store_team_id=") or line.startswith("application/export_project_only="):
+              if (
+                  line.startswith("application/app_store_team_id=")
+                  or line.startswith("application/export_project_only=")
+                  or line.startswith("custom_template/release=")
+              ):
                   print(line)
           PY
 
