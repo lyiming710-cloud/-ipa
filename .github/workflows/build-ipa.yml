@@ -1,0 +1,73 @@
+name: Build iOS IPA
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version string'
+        required: true
+        default: '0.29.0'
+  push:
+    branches:
+      - main
+
+jobs:
+  build-ios:
+    runs-on: macos-14
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Setup Godot Engine & Export Templates
+        run: |
+          echo "Downloading Godot 4.3 stable mono..."
+          curl -L -o godot_mono_mac.zip https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_mono_macos.zip
+          unzip -q godot_mono_mac.zip
+
+          echo "Downloading Godot 4.3 export templates..."
+          curl -L -o export_templates.tpz https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_mono_export_templates.tpz
+          unzip -q export_templates.tpz -d export_templates_extracted
+
+          TEMPLATE_DIR="$HOME/Library/Application Support/Godot/export_templates/4.3.stable.mono"
+          mkdir -p "$TEMPLATE_DIR"
+          cp -R export_templates_extracted/templates/* "$TEMPLATE_DIR/"
+          
+          # Find Godot binary
+          find . -name "Godot" -type f -perm +111
+
+      - name: Export Xcode Project
+        run: |
+          mkdir -p build
+          GODOT_BIN=$(find . -name "Godot" -path "*/Contents/MacOS/*" -type f | head -n 1)
+          echo "Using Godot binary: $GODOT_BIN"
+          "$GODOT_BIN" --headless --path decompiled_project --export-release "iOS" build/PlantsVsZombies.xcodeproj
+
+      - name: Build Xcode Project (Unsigned)
+        run: |
+          xcodebuild -project build/PlantsVsZombies.xcodeproj \
+            -scheme PlantsVsZombies \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath $PWD/build/archive.xcarchive \
+            archive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+      - name: Package IPA
+        run: |
+          mkdir -p Payload
+          cp -R build/archive.xcarchive/Products/Applications/*.app Payload/
+          zip -r PlantsVsZombies_Hybrid_v0.29.0.ipa Payload
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PlantsVsZombies_Hybrid_v0.29.0.ipa
+          path: PlantsVsZombies_Hybrid_v0.29.0.ipa
+          if-no-files-found: error

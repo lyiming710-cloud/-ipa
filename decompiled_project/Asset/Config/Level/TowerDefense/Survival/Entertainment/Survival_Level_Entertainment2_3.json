@@ -1,0 +1,323 @@
+e_3dkko")
+packetBankList = [SubResource("Resource_dx7fu")]
+metadata/_custom_type_script = "uid://dfj86l56q1n8g"
+{
+	"Name": "Survival_Level_Entertainment2_3",
+	"Description": "PLAYERS_TRIP_TO_MODERN",
+	"LevelName": "幸运四叶草（无尽）",
+	"LevelNumber": 3,
+	"NextLevel": "",
+	"HomeWorld": "Morden",
+	"Talk": "",
+	"Tutorial": "",
+	"Map": "FrontlawnBig",
+	"BGM": "Frontlawn",
+	"Reward": {
+		"RewardFirst": "2000",
+		"RewardType": "Coin"
+	},
+	"Event": {
+		"EventInit": [],
+		"EventReady": [],
+		"EventStart": []
+	},
+	"PacketBank": {
+		"ColdDownStart": false,
+		"Method": "Preset",
+		"Value": [
+			"PlantLuckyBlover"
+		]
+	},
+	"SunManager": {
+		"Open": true,
+		"Begin": 500,
+		"SpawnInterval": 12,
+		"SpawnNum": 50,
+		"MovingMethod": "Land"
+	},
+	"WaveManager": {
+		"Survival": "LuckyBloverEndlessNormal",
+		"FlagZombie": "ZombieFlag",
+		"FlagWaveInterval": 10,
+		"MaxNextWaveHealthPercentage": 0.8,
+		"MinNextWaveHealthPercentage": 0.15,
+		"BeginCol": 10,
+		"SpawnColEnd": 10,
+		"SpawnColStart": 10,
+		"SpawnOverride": {
+
+		},
+		"Dynamic": [
+			{
+
+			},
+			{
+
+			},
+			{
+
+			},
+			{
+
+			},
+			{
+
+			},
+			{
+
+			},
+			{
+
+			}
+		],
+		"Wave": [
+			{
+				"Event": [],
+				"DynamicPlantfood": [
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0
+				],
+				"Spawn": []
+			},
+			{
+				"Event": [],
+				"DynamicPlantfood": [
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0
+				],
+				"Spawn": []
+			},
+			{
+				"Event": [],
+				"DynamicPlantfood": [
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0
+				],
+				"Spawn": []
+			},
+			{
+				"Event": [],
+				"DynamicPlantfood": [
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0
+				],
+				"Spawn": []
+			},
+			{
+				"Event": [],
+				"DynamicPlantfood": [
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0
+				],
+				"Spawn": []
+			},
+			{
+				"Event": [],
+				"DynamicPlantfood": [
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0
+				],
+				"Spawn": []
+			},
+			{
+				"Event": [],
+				"DynamicPlantfood": [
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0
+				],
+				"Spawn": []
+			},
+			{
+				"Event": [],
+				"DynamicPlantfood": [
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0
+				],
+				"Spawn": []
+			},
+			{
+				"Event": [],
+				"DynamicPlantfood": [
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0
+				],
+				"Spawn": []
+			},
+			{
+				"Event": [],
+				"DynamicPlantfood": [
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0
+				],
+				"Spawn": []
+			},
+			{
+				"Event": [],
+				"DynamicPlantfood": [
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0
+				],
+				"Spawn": []
+			},
+			{
+				"Event": [],
+				"DynamicPlantfood": [
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0
+				],
+				"Spawn": []
+			},
+			{
+				"Event": [],
+				"DynamicPlantfood": [
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0
+				],
+				"Spawn": []
+			},
+			{
+				"Event": [],
+				"DynamicPlantfood": [
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0
+				],
+				"Spawn": []
+			},
+			{
+				"Event": [],
+				"DynamicPlantfood": [
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0
+				],
+				"Spawn": []
+			},
+			{
+				"Event": [],
+				"DynamicPlantfood": [
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0
+				],
+				"Spawn": []
+			},
+			{
+				"Event": [],
+				"DynamicPlantfood": [
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0
+				],
+				"Spawn": []
+			},
+			{
+				"Event": [],
+				"DynamicPlantfood": [
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0
+				],
+				"Spawn": []
+			},
+			{
+				"Event": [],
+				"DynamicPlantfood": [
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0
+				],
+				"Spawn": []
+			},
+			{
+				"Event": [],
+				"

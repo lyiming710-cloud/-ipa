@@ -1,0 +1,10 @@
+= false
+position = Vector2(480, 150)
+scale = Vector2(2, 3.9)
+texture = ExtResource("9_stripe")
+centered = false
+[gd_resource type="GradientTexture1D" format=3 uid="uid://ty64d8mf1ohp"]
+
+[sub_resource type="Gradient" id="Gradient_dfflo"]
+offsets = PackedFloat32Array(0, 0.505747, 0.885514, 1)
+colors = PackedColorArray(1, 1, 1, 1, 0.99395, 0.800083, 0.709278, 1, 0.7050

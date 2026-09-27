@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>PlantsVsZombies</AssemblyName>
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <TargetFramework>net9.0</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup>
+    <LangVersion>14.0</LangVersion>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemGroup />
+  <ItemGroup>
+    <Reference Include="GodotSharp">
+      <HintPath>../decompiled_project/data_PlantsVsZombies_windows_x86_64/GodotSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Logging.Abstractions">
+      <HintPath>../decompiled_project/data_PlantsVsZombies_windows_x86_64/Microsoft.Extensions.Logging.Abstractions.dll</HintPath>
+    </Reference>
+    <Reference Include="ZLogger">
+      <HintPath>../decompiled_project/data_PlantsVsZombies_windows_x86_64/ZLogger.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis">
+      <HintPath>../decompiled_project/data_PlantsVsZombies_windows_x86_64/Microsoft.CodeAnalysis.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp">
+      <HintPath>../decompiled_project/data_PlantsVsZombies_windows_x86_64/Microsoft.CodeAnalysis.CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="ZString">
+      <HintPath>../decompiled_project/data_PlantsVsZombies_windows_x86_64/ZString.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Logging">
+      <HintPath>../decompiled_project/data_PlantsVsZombies_windows_x86_64/Microsoft.Extensions.Logging.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

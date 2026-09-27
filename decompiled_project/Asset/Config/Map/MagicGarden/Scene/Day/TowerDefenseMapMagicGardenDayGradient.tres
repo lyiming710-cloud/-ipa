@@ -1,0 +1,8 @@
+e
+position = Vector2(496, 160)
+scale = Vector2(2, 3.9840639)
+texture = ExtResource("4_stripe")
+centered = false
+[gd_resource type="GradientTexture1D" format=3 uid="uid://dsttny2fw8fnu"]
+
+[sub_resource type="Gradient" id="Grad

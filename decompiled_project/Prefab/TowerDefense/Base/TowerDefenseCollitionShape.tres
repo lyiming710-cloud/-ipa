@@ -1,0 +1,5 @@
+ype="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_xw60a")
+}
+autoplay = "Arr

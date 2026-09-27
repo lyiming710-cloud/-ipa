@@ -1,0 +1,49 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; but it can also be edited by hand.
+
+config_version=5
+
+[application]
+
+config/name="植物大战僵尸杂交版"
+config/version="0.29.0"
+run/main_scene="res://Scene/Loading/Loading.tscn"
+config/features=PackedStringArray("4.3", "C#", "Mobile")
+config/icon="res://icon.png"
+
+[autoload]
+
+Global="*res://Core/Global/Global.tscn"
+SceneManager="*res://Core/SceneManager/SceneManager.tscn"
+AudioManager="*res://Core/AudioManager/AudioManager.tscn"
+GameSaveManager="*res://Core/GameSaveManager/GameSaveManager.tscn"
+ResourceManager="*res://Core/ResourceManager/ResourceManager.tscn"
+DialogManager="*res://Core/DialogManager/DialogManager.tscn"
+BroadCastManager="*res://Core/BroadCastManager/BroadCastManager.tscn"
+InternetServerManager="*res://Core/InternetServerManager/InternetServerManager.tscn"
+CrashLogger="*res://Core/CrashLogger/CrashLogger.tscn"
+ObjectManager="*res://Core/ObjectManager/ObjectManager.tscn"
+BattleEventBus="*res://Core/BattleEventBus/BattleEventBus.tscn"
+TutorialManager="*res://Core/TutorialManager/TutorialManager.tscn"
+CommandManager="*res://Core/CommandManager/CommandManager.tscn"
+CommandConsole="*res://Core/CommandConsole/CommandConsole.tscn"
+TowerDefenseManager="*res://Core/TowerDefenseManager/TowerDefenseManager.tscn"
+ViewManager="*res://Core/ViewManager/ViewManager.tscn"
+MultiPlayerManager="*res://Core/MultiPlayerManager/MultiPlayerManager.tscn"
+
+[display]
+
+window/size/viewport_width=1080
+window/size/viewport_height=600
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep_height"
+window/handheld/orientation=4
+
+[dotnet]
+
+project/assembly_name="PlantsVsZombies"
+
+[rendering]
+
+renderer/rendering_method="mobile"

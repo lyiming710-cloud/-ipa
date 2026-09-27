@@ -1,0 +1,42 @@
+y[ExtResource("3_qfic6")]([SubResource("Resource_kcy8q")])
+metadata/_custom_type_script = "uid://ciasl1r6mxl1w"
+{
+	"SaveKey": "Level1_1Tutorial",
+	"Step" : [
+		{
+			"BroadCast" : {
+				"Text" : "LEVEL1_1_TUTORIAL_1"
+			},
+			"Condition" : [
+				{
+					"Name" : "CheckCharacterNum" ,
+					"Data" : {
+						"CharacterName" : "PlantSunflowerPea" ,
+						"Method" : ">=" ,
+						"Num" : 1
+					}
+				}
+			]
+		},
+		{
+			"BroadCast" : {
+				"Text" : "LEVEL1_1_TUTORIAL_2" ,
+			},
+			"Condition" : [
+				{
+					"Name" : "CheckSunCollect" ,
+					"Data" : {
+						"Num" : 25
+					}
+				}
+			]
+		},
+		{
+			"BroadCast" : {
+				"Text" : "LEVEL1_1_TUTORIAL_3" ,
+			},
+			"Condition" : [
+				{
+					"Name" : "CheckCharacterNum" ,
+					"Data" : {
+		

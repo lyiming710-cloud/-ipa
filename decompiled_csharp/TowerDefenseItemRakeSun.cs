@@ -1,0 +1,72 @@
+using System.Collections.Generic;
+using System.ComponentModel;
+using Godot;
+using Godot.Bridge;
+using Godot.NativeInterop;
+
+[Tool]
+[ScriptPath("res://Asset/Anime/Character/Item/RakeSun/Scene/TowerDefenseItemRakeSun.cs")]
+public class TowerDefenseItemRakeSun : TowerDefenseItemRakeBase
+{
+	public new class MethodName : TowerDefenseItemRakeBase.MethodName
+	{
+		public new static readonly StringName ApplyHitEffect = "ApplyHitEffect";
+	}
+
+	public new class PropertyName : TowerDefenseItemRakeBase.PropertyName
+	{
+	}
+
+	public new class SignalName : TowerDefenseItemRakeBase.SignalName
+	{
+	}
+
+	protected override void ApplyHitEffect()
+	{
+		attackComponent.AttackExecute(10000.0);
+		SunCreate(GetLogicalGlobalPosition(), 50L, TowerDefenseEnum.SUN_MOVING_METHOD.GRAVITY, new Vector2((float)GD.RandRange(-50.0, 50.0), -400f));
+	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	internal new static List<MethodInfo> GetGodotMethodList()
+	{
+		return new List<MethodInfo>(1)
+		{
+			new MethodInfo(MethodName.ApplyHitEffect, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null)
+		};
+	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
+	{
+		if (method == MethodName.ApplyHitEffect && args.Count == 0)
+		{
+			ApplyHitEffect();
+			ret = default;
+			return true;
+		}
+		return base.InvokeGodotClassMethod(in method, args, out ret);
+	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	protected override bool HasGodotClassMethod(in godot_string_name method)
+	{
+		if (method == MethodName.ApplyHitEffect)
+		{
+			return true;
+		}
+		return base.HasGodotClassMethod(in method);
+	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	protected override void SaveGodotObjectData(GodotSerializationInfo info)
+	{
+		base.SaveGodotObjectData(info);
+	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
+	{
+		base.RestoreGodotObjectData(info);
+	}
+}

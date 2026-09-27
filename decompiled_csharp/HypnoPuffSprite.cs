@@ -1,0 +1,31 @@
+using System.ComponentModel;
+using Godot;
+using Godot.Bridge;
+
+[ScriptPath("res://Asset/Config/Projectile/Puff/Sprite/HypnoPuff/HypnoPuffSprite.cs")]
+public class HypnoPuffSprite : AdobeAnimateSpriteBase
+{
+	public new class MethodName : AdobeAnimateSpriteBase.MethodName
+	{
+	}
+
+	public new class PropertyName : AdobeAnimateSpriteBase.PropertyName
+	{
+	}
+
+	public new class SignalName : AdobeAnimateSpriteBase.SignalName
+	{
+	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	protected override void SaveGodotObjectData(GodotSerializationInfo info)
+	{
+		base.SaveGodotObjectData(info);
+	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
+	{
+		base.RestoreGodotObjectData(info);
+	}
+}

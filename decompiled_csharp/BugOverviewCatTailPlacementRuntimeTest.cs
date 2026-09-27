@@ -1,0 +1,531 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Threading.Tasks;
+using Godot;
+using Godot.Bridge;
+using Godot.Collections;
+using Godot.NativeInterop;
+
+[ScriptPath("res://Test/BugOverviewCatTailPlacementRuntimeTest.cs")]
+public class BugOverviewCatTailPlacementRuntimeTest : Node
+{
+	public new class MethodName : Node.MethodName
+	{
+		public new static readonly StringName _Ready = "_Ready";
+
+		public static readonly StringName CreateMapFeature = "CreateMapFeature";
+
+		public static readonly StringName LoadPacket = "LoadPacket";
+
+		public static readonly StringName RegisterRealFixtures = "RegisterRealFixtures";
+
+		public static readonly StringName RegisterPacket = "RegisterPacket";
+
+		public static readonly StringName RegisterCharacter = "RegisterCharacter";
+
+		public static readonly StringName RestoreRealFixtures = "RestoreRealFixtures";
+
+		public static readonly StringName Check = "Check";
+	}
+
+	public new class PropertyName : Node.PropertyName
+	{
+		public static readonly StringName _checks = "_checks";
+
+		public static readonly StringName _failures = "_failures";
+	}
+
+	public new class SignalName : Node.SignalName
+	{
+	}
+
+	private const string CatTailPacketPath = "res://Asset/Anime/Character/Plant/Cover/CatTail/Packet/PlantCatTail.tres";
+
+	private const string CatTailScenePath = "res://Asset/Anime/Character/Plant/Cover/CatTail/Scene/TowerDefensePlantCatTail.tscn";
+
+	private const string LilyPadPacketPath = "res://Asset/Anime/Character/Plant/Chapter0/LilyPad/Packet/PlantLilyPad.tres";
+
+	private const string LilyPadScenePath = "res://Asset/Anime/Character/Plant/Chapter0/LilyPad/Scene/TowerDefensePlantLilyPad.tscn";
+
+	private const string PeaLilyPadPacketPath = "res://Asset/Anime/Character/Plant/Chapter2/PeaLilyPad/Packet/PlantPeaLilyPad.tres";
+
+	private const string PeaLilyPadScenePath = "res://Asset/Anime/Character/Plant/Chapter2/PeaLilyPad/Scene/TowerDefensePlantPeaLilyPad.tscn";
+
+	private static readonly Vector2I LandGrid = new Vector2I(2, 2);
+
+	private static readonly Vector2I BareWaterGrid = new Vector2I(3, 2);
+
+	private static readonly Vector2I LilyPadGrid = new Vector2I(4, 2);
+
+	private static readonly Vector2I PeaLilyPadGrid = new Vector2I(5, 2);
+
+	private static readonly Vector2I GemMatchLandGrid = new Vector2I(6, 2);
+
+	private int _checks;
+
+	private int _failures;
+
+	private readonly System.Collections.Generic.Dictionary<string, Resource> _previousPackets = new System.Collections.Generic.Dictionary<string, Resource>();
+
+	private readonly System.Collections.Generic.Dictionary<string, Resource> _previousCharacters = new System.Collections.Generic.Dictionary<string, Resource>();
+
+	private readonly HashSet<string> _missingPackets = new HashSet<string>();
+
+	private readonly HashSet<string> _missingCharacters = new HashSet<string>();
+
+	public override async void _Ready()
+	{
+		TowerDefenseManager manager = TowerDefenseManager.Instance;
+		TowerDefenseControlNew previousControl = manager?.currentControl;
+		CatTailPlacementRuntimeControlStub control = null;
+		TowerDefenseMapControl mapControl = null;
+		TowerDefenseBattleFeatureMap mapFeature = null;
+		try
+		{
+			_ = 4;
+			try
+			{
+				Check(GodotObject.IsInstanceValid(manager), "TowerDefenseManager autoload must be available.");
+				Check(GodotObject.IsInstanceValid(ResourceManager.Instance), "ResourceManager autoload must be available.");
+				if (!GodotObject.IsInstanceValid(manager) || !GodotObject.IsInstanceValid(ResourceManager.Instance))
+				{
+					goto end_IL_0096;
+				}
+				RegisterRealFixtures();
+				control = new CatTailPlacementRuntimeControlStub
+				{
+					Name = "CatTailPlacementRuntimeControl",
+					isGameRunning = false,
+					isInit = true,
+					levelConfig = new TowerDefenseLevelConfig()
+				};
+				AddChild(control, forceReadableName: false, InternalMode.Disabled);
+				Node2D node2D = new Node2D
+				{
+					Name = "CharacterNode"
+				};
+				control.AddChild(node2D, forceReadableName: false, InternalMode.Disabled);
+				control.characterNode = node2D;
+				manager.currentControl = control;
+				manager.gridBeginPos = Vector2.Zero;
+				manager.gridSize = new Vector2(100f, 76f);
+				manager.gridNum = new Vector2I(9, 5);
+				mapControl = new TowerDefenseMapControl
+				{
+					Name = "MapControl"
+				};
+				mapFeature = CreateMapFeature(mapControl, manager.gridNum);
+				mapFeature.control = control;
+				control.featureDictionary[new StringName("Map")] = mapFeature;
+				TowerDefensePacketConfig catTailPacket = LoadPacket("res://Asset/Anime/Character/Plant/Cover/CatTail/Packet/PlantCatTail.tres");
+				Check(GodotObject.IsInstanceValid(catTailPacket), "The regression must load the real CatTail packet.");
+				if (!GodotObject.IsInstanceValid(catTailPacket))
+				{
+					goto end_IL_0096;
+				}
+				Check(catTailPacket.characterConfig.name == "PlantCatTail", "The packet fixture must resolve the real PlantCatTail config.");
+				Check(catTailPacket.GetPlantCover().Contains("PlantLilyPad"), "CatTail must retain LilyPad as an allowed upgrade base.");
+				Check(catTailPacket.GetPlantCover().Contains("PlantPeaLilyPad"), "CatTail must retain PeaLilyPad as an allowed upgrade base.");
+				Check(!catTailPacket.GetCoverCanDirectPlant(), "The ordinary CatTail packet must not bypass its required LilyPad cover.");
+				Check(catTailPacket.characterConfig.plantGridType.Contains(TowerDefenseEnum.PLANTGRIDTYPE.GROUND) && catTailPacket.characterConfig.plantGridType.Contains(TowerDefenseEnum.PLANTGRIDTYPE.WATER), "CatTail must retain the ground/water terrain support used by GemMatch no-limit spawning.");
+				TowerDefenseCellInstance mapCell = TowerDefenseManager.GetMapCell(LandGrid);
+				TowerDefenseCellInstance mapCell2 = TowerDefenseManager.GetMapCell(BareWaterGrid);
+				Check(GodotObject.IsInstanceValid(mapCell) && GodotObject.IsInstanceValid(mapCell2), "The regression must use real land and water map cells.");
+				Check(mapCell.gridType.Contains(TowerDefenseEnum.PLANTGRIDTYPE.GROUND), "The land fixture must expose the real GROUND cell type.");
+				Check(mapCell2.gridType.Contains(TowerDefenseEnum.PLANTGRIDTYPE.WATER) && mapCell2.isWater, "The water fixture must expose the real WATER cell type.");
+				Check(!mapCell.CanPacketPlant(catTailPacket), "Normal placement must reject CatTail on bare land.");
+				Check(!mapCell2.CanPacketPlant(catTailPacket), "Normal placement must reject CatTail on bare water.");
+				Check(catTailPacket.Plant(LandGrid, playAudio: false) == null, "The authoritative packet Plant path must reject CatTail on bare land.");
+				Check(catTailPacket.Plant(BareWaterGrid, playAudio: false) == null, "The authoritative packet Plant path must reject CatTail on bare water.");
+				TowerDefensePlant lilyPad = LoadPacket("res://Asset/Anime/Character/Plant/Chapter0/LilyPad/Packet/PlantLilyPad.tres")?.Plant(LilyPadGrid, playAudio: false) as TowerDefensePlant;
+				await WaitFrames(4);
+				TowerDefenseCellInstance lilyPadCell = TowerDefenseManager.GetMapCell(LilyPadGrid);
+				Check(GodotObject.IsInstanceValid(lilyPad), "The real LilyPad packet must plant on a water cell.");
+				Check(lilyPadCell.HasCharacter("PlantLilyPad"), "The water cell must be occupied by the real LilyPad before upgrading.");
+				Check(lilyPadCell.CanPacketPlant(catTailPacket), "Normal placement must allow CatTail when a real LilyPad is present.");
+				TowerDefensePlant instance = catTailPacket.Plant(LilyPadGrid, playAudio: false) as TowerDefensePlant;
+				Check(GodotObject.IsInstanceValid(instance), "The authoritative packet path must create CatTail over LilyPad.");
+				await WaitFrames(4);
+				Check(lilyPadCell.HasCharacter("PlantCatTail"), "The LilyPad cell must contain the real CatTail after the upgrade.");
+				TowerDefensePlant peaLilyPad = LoadPacket("res://Asset/Anime/Character/Plant/Chapter2/PeaLilyPad/Packet/PlantPeaLilyPad.tres")?.Plant(PeaLilyPadGrid, playAudio: false) as TowerDefensePlant;
+				await WaitFrames(4);
+				TowerDefenseCellInstance peaLilyPadCell = TowerDefenseManager.GetMapCell(PeaLilyPadGrid);
+				Check(GodotObject.IsInstanceValid(peaLilyPad), "The real PeaLilyPad packet must plant on a water cell.");
+				Check(peaLilyPadCell.HasCharacter("PlantPeaLilyPad"), "The water cell must be occupied by the real PeaLilyPad before upgrading.");
+				Check(peaLilyPadCell.CanPacketPlant(catTailPacket), "Normal placement must allow CatTail when a real PeaLilyPad is present.");
+				TowerDefensePlant instance2 = catTailPacket.Plant(PeaLilyPadGrid, playAudio: false) as TowerDefensePlant;
+				Check(GodotObject.IsInstanceValid(instance2), "The authoritative packet path must create CatTail over PeaLilyPad.");
+				await WaitFrames(4);
+				Check(peaLilyPadCell.HasCharacter("PlantCatTail"), "The PeaLilyPad cell must contain the real CatTail after the upgrade.");
+				TowerDefenseCellInstance gemMatchCell = TowerDefenseManager.GetMapCell(GemMatchLandGrid);
+				Check(gemMatchCell.CanPacketPlant(catTailPacket, noLimit: true), "GemMatch no-limit placement must still permit CatTail on its land board cells.");
+				TowerDefensePlant instance3 = catTailPacket.Plant(GemMatchLandGrid, playAudio: false, noLimit: true) as TowerDefensePlant;
+				Check(GodotObject.IsInstanceValid(instance3), "The real packet must preserve GemMatch's no-limit CatTail spawn path.");
+				await WaitFrames(4);
+				Check(gemMatchCell.HasCharacter("PlantCatTail"), "The GemMatch land cell must contain CatTail after no-limit spawning.");
+				goto end_IL_0077;
+				end_IL_0096:;
+			}
+			catch (Exception value)
+			{
+				_failures++;
+				GD.PushError($"[BugOverviewCatTailPlacementRuntimeTest] Unexpected exception: {value}");
+				goto end_IL_0077;
+			}
+			return;
+			end_IL_0077:;
+		}
+		finally
+		{
+			if (GodotObject.IsInstanceValid(manager))
+			{
+				manager.currentControl = previousControl;
+			}
+			mapFeature?.Destroy();
+			if (GodotObject.IsInstanceValid(mapControl))
+			{
+				mapControl.Free();
+			}
+			if (GodotObject.IsInstanceValid(control))
+			{
+				control.QueueFree();
+			}
+			RestoreRealFixtures();
+			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+		}
+		bool flag = _failures == 0 && _checks == 28;
+		GD.Print($"CATTAIL_PLACEMENT_RESULT passed={flag} checks={_checks} failures={_failures}");
+		GetTree().Quit((!flag) ? 2 : 0);
+	}
+
+	private static TowerDefenseBattleFeatureMap CreateMapFeature(TowerDefenseMapControl mapControl, Vector2I gridNum)
+	{
+		TowerDefenseBattleFeatureMap towerDefenseBattleFeatureMap = (mapControl.mapFeature = new TowerDefenseBattleFeatureMap
+		{
+			mapControl = mapControl,
+			config = new TowerDefenseMapConfig()
+		});
+		towerDefenseBattleFeatureMap.plantGrid.Resize(gridNum.X + 1);
+		for (int i = 0; i <= gridNum.X; i++)
+		{
+			Godot.Collections.Array array = new Godot.Collections.Array();
+			array.Resize(gridNum.Y + 1);
+			for (int j = 1; j <= gridNum.Y; j++)
+			{
+				TowerDefenseCellConfig towerDefenseCellConfig = new TowerDefenseCellConfig();
+				if (i >= BareWaterGrid.X && i <= PeaLilyPadGrid.X)
+				{
+					towerDefenseCellConfig.gridType = new Array<TowerDefenseEnum.PLANTGRIDTYPE>
+					{
+						TowerDefenseEnum.PLANTGRIDTYPE.WATER,
+						TowerDefenseEnum.PLANTGRIDTYPE.AIR
+					};
+				}
+				TowerDefenseCellInstance towerDefenseCellInstance = new TowerDefenseCellInstance
+				{
+					gridPos = new Vector2I(i, j)
+				};
+				towerDefenseCellInstance.Init(towerDefenseCellConfig);
+				array[j] = towerDefenseCellInstance;
+			}
+			towerDefenseBattleFeatureMap.plantGrid[i] = array;
+		}
+		towerDefenseBattleFeatureMap.iceCapList.Resize(gridNum.Y + 1);
+		return towerDefenseBattleFeatureMap;
+	}
+
+	private static TowerDefensePacketConfig LoadPacket(string path)
+	{
+		return ResourceLoader.Load<TowerDefensePacketConfig>(path, null, ResourceLoader.CacheMode.Ignore)?.Duplicate(deep: true) as TowerDefensePacketConfig;
+	}
+
+	private void RegisterRealFixtures()
+	{
+		RegisterPacket("PlantCatTail", "res://Asset/Anime/Character/Plant/Cover/CatTail/Packet/PlantCatTail.tres");
+		RegisterPacket("PlantLilyPad", "res://Asset/Anime/Character/Plant/Chapter0/LilyPad/Packet/PlantLilyPad.tres");
+		RegisterPacket("PlantPeaLilyPad", "res://Asset/Anime/Character/Plant/Chapter2/PeaLilyPad/Packet/PlantPeaLilyPad.tres");
+		RegisterCharacter("PlantCatTail", "res://Asset/Anime/Character/Plant/Cover/CatTail/Scene/TowerDefensePlantCatTail.tscn");
+		RegisterCharacter("PlantLilyPad", "res://Asset/Anime/Character/Plant/Chapter0/LilyPad/Scene/TowerDefensePlantLilyPad.tscn");
+		RegisterCharacter("PlantPeaLilyPad", "res://Asset/Anime/Character/Plant/Chapter2/PeaLilyPad/Scene/TowerDefensePlantPeaLilyPad.tscn");
+	}
+
+	private void RegisterPacket(string key, string path)
+	{
+		ResourceManager instance = ResourceManager.Instance;
+		if (instance.TOWERDEFENSE_PACKETS.TryGetValue(key, out var value))
+		{
+			_previousPackets[key] = value;
+		}
+		else
+		{
+			_missingPackets.Add(key);
+		}
+		instance.TOWERDEFENSE_PACKETS[key] = ResourceLoader.Load<TowerDefensePacketConfig>(path, null, ResourceLoader.CacheMode.Ignore);
+	}
+
+	private void RegisterCharacter(string key, string path)
+	{
+		ResourceManager instance = ResourceManager.Instance;
+		if (instance.TOWERDEFENSE_CHARCATERS.TryGetValue(key, out var value))
+		{
+			_previousCharacters[key] = value;
+		}
+		else
+		{
+			_missingCharacters.Add(key);
+		}
+		instance.TOWERDEFENSE_CHARCATERS[key] = ResourceLoader.Load<PackedScene>(path, null, ResourceLoader.CacheMode.Ignore);
+	}
+
+	private void RestoreRealFixtures()
+	{
+		ResourceManager instance = ResourceManager.Instance;
+		if (!GodotObject.IsInstanceValid(instance))
+		{
+			return;
+		}
+		foreach (string missingPacket in _missingPackets)
+		{
+			instance.TOWERDEFENSE_PACKETS.Remove(missingPacket);
+		}
+		foreach (KeyValuePair<string, Resource> previousPacket in _previousPackets)
+		{
+			instance.TOWERDEFENSE_PACKETS[previousPacket.Key] = previousPacket.Value;
+		}
+		foreach (string missingCharacter in _missingCharacters)
+		{
+			instance.TOWERDEFENSE_CHARCATERS.Remove(missingCharacter);
+		}
+		foreach (KeyValuePair<string, Resource> previousCharacter in _previousCharacters)
+		{
+			instance.TOWERDEFENSE_CHARCATERS[previousCharacter.Key] = previousCharacter.Value;
+		}
+	}
+
+	private async Task WaitFrames(int count)
+	{
+		for (int frame = 0; frame < count; frame++)
+		{
+			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+			await ToSignal(GetTree(), SceneTree.SignalName.PhysicsFrame);
+		}
+	}
+
+	private void Check(bool condition, string message)
+	{
+		_checks++;
+		if (!condition)
+		{
+			_failures++;
+			GD.PushError("[BugOverviewCatTailPlacementRuntimeTest] " + message);
+		}
+	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	internal static List<MethodInfo> GetGodotMethodList()
+	{
+		return new List<MethodInfo>(8)
+		{
+			new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null),
+			new MethodInfo(MethodName.CreateMapFeature, new PropertyInfo(Variant.Type.Object, "", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Resource"), exported: false), MethodFlags.Normal | MethodFlags.Static, new List<PropertyInfo>
+			{
+				new PropertyInfo(Variant.Type.Object, "mapControl", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Node2D"), exported: false),
+				new PropertyInfo(Variant.Type.Vector2I, "gridNum", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
+			}, null),
+			new MethodInfo(MethodName.LoadPacket, new PropertyInfo(Variant.Type.Object, "", PropertyHint.None, "", PropertyUsageFlags.Default, new StringName("Resource"), exported: false), MethodFlags.Normal | MethodFlags.Static, new List<PropertyInfo>
+			{
+				new PropertyInfo(Variant.Type.String, "path", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
+			}, null),
+			new MethodInfo(MethodName.RegisterRealFixtures, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null),
+			new MethodInfo(MethodName.RegisterPacket, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
+			{
+				new PropertyInfo(Variant.Type.String, "key", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false),
+				new PropertyInfo(Variant.Type.String, "path", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
+			}, null),
+			new MethodInfo(MethodName.RegisterCharacter, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
+			{
+				new PropertyInfo(Variant.Type.String, "key", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false),
+				new PropertyInfo(Variant.Type.String, "path", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
+			}, null),
+			new MethodInfo(MethodName.RestoreRealFixtures, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null),
+			new MethodInfo(MethodName.Check, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
+			{
+				new PropertyInfo(Variant.Type.Bool, "condition", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false),
+				new PropertyInfo(Variant.Type.String, "message", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
+			}, null)
+		};
+	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
+	{
+		if (method == MethodName._Ready && args.Count == 0)
+		{
+			_Ready();
+			ret = default;
+			return true;
+		}
+		if (method == MethodName.CreateMapFeature && args.Count == 2)
+		{
+			ret = VariantUtils.CreateFrom<TowerDefenseBattleFeatureMap>(CreateMapFeature(VariantUtils.ConvertTo<TowerDefenseMapControl>(in args[0]), VariantUtils.ConvertTo<Vector2I>(in args[1])));
+			return true;
+		}
+		if (method == MethodName.LoadPacket && args.Count == 1)
+		{
+			ret = VariantUtils.CreateFrom<TowerDefensePacketConfig>(LoadPacket(VariantUtils.ConvertTo<string>(in args[0])));
+			return true;
+		}
+		if (method == MethodName.RegisterRealFixtures && args.Count == 0)
+		{
+			RegisterRealFixtures();
+			ret = default;
+			return true;
+		}
+		if (method == MethodName.RegisterPacket && args.Count == 2)
+		{
+			RegisterPacket(VariantUtils.ConvertTo<string>(in args[0]), VariantUtils.ConvertTo<string>(in args[1]));
+			ret = default;
+			return true;
+		}
+		if (method == MethodName.RegisterCharacter && args.Count == 2)
+		{
+			RegisterCharacter(VariantUtils.ConvertTo<string>(in args[0]), VariantUtils.ConvertTo<string>(in args[1]));
+			ret = default;
+			return true;
+		}
+		if (method == MethodName.RestoreRealFixtures && args.Count == 0)
+		{
+			RestoreRealFixtures();
+			ret = default;
+			return true;
+		}
+		if (method == MethodName.Check && args.Count == 2)
+		{
+			Check(VariantUtils.ConvertTo<bool>(in args[0]), VariantUtils.ConvertTo<string>(in args[1]));
+			ret = default;
+			return true;
+		}
+		return base.InvokeGodotClassMethod(in method, args, out ret);
+	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	internal static bool InvokeGodotClassStaticMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
+	{
+		if (method == MethodName.CreateMapFeature && args.Count == 2)
+		{
+			ret = VariantUtils.CreateFrom<TowerDefenseBattleFeatureMap>(CreateMapFeature(VariantUtils.ConvertTo<TowerDefenseMapControl>(in args[0]), VariantUtils.ConvertTo<Vector2I>(in args[1])));
+			return true;
+		}
+		if (method == MethodName.LoadPacket && args.Count == 1)
+		{
+			ret = VariantUtils.CreateFrom<TowerDefensePacketConfig>(LoadPacket(VariantUtils.ConvertTo<string>(in args[0])));
+			return true;
+		}
+		ret = default;
+		return false;
+	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	protected override bool HasGodotClassMethod(in godot_string_name method)
+	{
+		if (method == MethodName._Ready)
+		{
+			return true;
+		}
+		if (method == MethodName.CreateMapFeature)
+		{
+			return true;
+		}
+		if (method == MethodName.LoadPacket)
+		{
+			return true;
+		}
+		if (method == MethodName.RegisterRealFixtures)
+		{
+			return true;
+		}
+		if (method == MethodName.RegisterPacket)
+		{
+			return true;
+		}
+		if (method == MethodName.RegisterCharacter)
+		{
+			return true;
+		}
+		if (method == MethodName.RestoreRealFixtures)
+		{
+			return true;
+		}
+		if (method == MethodName.Check)
+		{
+			return true;
+		}
+		return base.HasGodotClassMethod(in method);
+	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
+	{
+		if (name == PropertyName._checks)
+		{
+			_checks = VariantUtils.ConvertTo<int>(in value);
+			return true;
+		}
+		if (name == PropertyName._failures)
+		{
+			_failures = VariantUtils.ConvertTo<int>(in value);
+			return true;
+		}
+		return base.SetGodotClassPropertyValue(in name, in value);
+	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
+	{
+		if (name == PropertyName._checks)
+		{
+			value = VariantUtils.CreateFrom(in _checks);
+			return true;
+		}
+		if (name == PropertyName._failures)
+		{
+			value = VariantUtils.CreateFrom(in _failures);
+			return true;
+		}
+		return base.GetGodotClassPropertyValue(in name, out value);
+	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	internal static List<PropertyInfo> GetGodotPropertyList()
+	{
+		return new List<PropertyInfo>
+		{
+			new PropertyInfo(Variant.Type.Int, PropertyName._checks, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false),
+			new PropertyInfo(Variant.Type.Int, PropertyName._failures, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false)
+		};
+	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	protected override void SaveGodotObjectData(GodotSerializationInfo info)
+	{
+		base.SaveGodotObjectData(info);
+		info.AddProperty(PropertyName._checks, Variant.From(in _checks));
+		info.AddProperty(PropertyName._failures, Variant.From(in _failures));
+	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
+	{
+		base.RestoreGodotObjectData(info);
+		if (info.TryGetProperty(PropertyName._checks, out var value))
+		{
+			_checks = value.As<int>();
+		}
+		if (info.TryGetProperty(PropertyName._failures, out var value2))
+		{
+			_failures = value2.As<int>();
+		}
+	}
+}

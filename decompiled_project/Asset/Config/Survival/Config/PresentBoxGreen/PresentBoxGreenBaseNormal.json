@@ -1,0 +1,28 @@
+Resource("Resource_v38l2"), SubResource("Resource_tcdif")])
+metadata/_custom_type_script = "uid://huks85pqdgqb"
+{
+	"RoundLimit": 3.0,
+	"RoundDayNightChange": false,
+	"PointIncrementPerWave": 30.0,
+	"PointIncrementPerBigWave": 40.0,
+	"PointIncrementPerRound": 50.0,
+	"PointBegin": 100.0,
+	"PointMax": 40000,
+	"PointBigWaveScale": 0.5,
+	"ZombiePoolSetting": {
+		"ZombiePoolBase": [
+			"ZombieNormal",
+			"ZombieNormalCone"
+		],
+		"ZombiePoolRoundAdd": [
+			{
+				"Round": 1.0,
+				"Zombie": [
+					"ZombieNormalBucket",
+					"ZombiePaper"
+				]
+			},
+			{
+				"Round": 2.0,
+				"Zombie": [
+					"ZombieN

@@ -1,0 +1,28 @@
+# 1. 临时文件与日志
+*.log
+syntax_error.txt
+build_test.txt
+large_files.txt
+workspace_status.txt
+ver_found.txt
+
+# 2. 原始压缩包与大文件（严禁入库）
+*.zip
+*.apk
+*.APK
+*.exe
+*.pck
+gdre_tools*
+植物大战僵尸杂交重制版/
+植物大战僵尸杂交版0.29.*
+libGodotMonoDecompNativeAOT.so
+
+# 3. Godot 缓存与构建输出（必须排除）
+.godot/
+.mono/
+bin/
+obj/
+build/
+Payload/
+*.ipa
+*.xcodeproj

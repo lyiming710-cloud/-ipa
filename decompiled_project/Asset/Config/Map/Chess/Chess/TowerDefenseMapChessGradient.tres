@@ -1,0 +1,7 @@
+isible = false
+position = Vector2(87.55, 283.2)
+scale = Vector2(0.99715909, 1)
+texture = ExtResource("6_mxg2n")
+[gd_resource type="GradientTexture1D" format=3 uid="uid://cml6laa2haync"]
+
+[sub_resource type="Gradient" id="Gradient

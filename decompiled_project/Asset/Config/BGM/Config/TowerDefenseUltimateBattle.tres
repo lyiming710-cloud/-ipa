@@ -1,0 +1,11 @@
+= ExtResource("1_nxo00")
+translate = "BGM_ROOF_NIGHT"
+entry = "ChooseYourSeeds"
+flag1 = "Zombotany"
+win = "Win"
+[gd_resource type="Resource" script_class="TowerDefenseBackgroundMusicConfig" format=3 uid="uid://bm5cfv08kvi4s"]
+
+[ext_resource type="Script" uid="uid://c7pu3uq6hdh6q" path="res://Registry/Battle/Feature/BGM/Resource/TowerDefenseBackgroundMusicConfig.cs" id="1_r0cru"]
+
+[resource]
+script = ExtResou

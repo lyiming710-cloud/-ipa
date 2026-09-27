@@ -1,0 +1,10 @@
+
+visible = false
+position = Vector2(101, 297.5)
+scale = Vector2(1, 0.99857143)
+texture = ExtResource("7_tmbv5")
+[gd_resource type="GradientTexture1D" format=3 uid="uid://jq3yqb2o0c1a"]
+
+[sub_resource type="Gradient" id="Gradient_dfflo"]
+offsets = PackedFloat32Array(0, 0.505747, 0.885514, 1)
+colors = PackedColorArray(1, 1, 1, 1, 0.99395, 0.800083, 0.709278, 1, 0.7050

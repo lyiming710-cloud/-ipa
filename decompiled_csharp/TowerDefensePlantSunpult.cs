@@ -1,0 +1,686 @@
+using System.Collections.Generic;
+using System.ComponentModel;
+using Godot;
+using Godot.Bridge;
+using Godot.Collections;
+using Godot.NativeInterop;
+
+[Tool]
+[GlobalClass]
+[ScriptPath("res://Asset/Anime/Character/Plant/Chapter5/Sunpult/Scene/TowerDefensePlantSunpult.cs")]
+public class TowerDefensePlantSunpult : TowerDefensePlant
+{
+	public new class MethodName : TowerDefensePlant.MethodName
+	{
+		public new static readonly StringName _Ready = "_Ready";
+
+		public new static readonly StringName _ExitTree = "_ExitTree";
+
+		public new static readonly StringName OnCustomSwitched = "OnCustomSwitched";
+
+		public static readonly StringName GowUp = "GowUp";
+
+		public new static readonly StringName OnHypnosisStateChanged = "OnHypnosisStateChanged";
+
+		public new static readonly StringName ExportVariantSave = "ExportVariantSave";
+
+		public new static readonly StringName ImportVariantSave = "ImportVariantSave";
+	}
+
+	public new class PropertyName : TowerDefensePlant.PropertyName
+	{
+		public static readonly StringName produceInterval = "produceInterval";
+
+		public static readonly StringName sunNum = "sunNum";
+
+		public static readonly StringName growUpTime = "growUpTime";
+
+		public static readonly StringName fireInterval = "fireInterval";
+
+		public static readonly StringName fireNum = "fireNum";
+
+		public static readonly StringName projectileName = "projectileName";
+
+		public static readonly StringName skinName = "skinName";
+
+		public static readonly StringName _produceInterval = "_produceInterval";
+
+		public static readonly StringName _sunNum = "_sunNum";
+
+		public static readonly StringName _growUpTime = "_growUpTime";
+
+		public static readonly StringName _fireInterval = "_fireInterval";
+
+		public static readonly StringName _fireNum = "_fireNum";
+
+		public static readonly StringName _projectileName = "_projectileName";
+
+		public static readonly StringName _skinName = "_skinName";
+	}
+
+	public new class SignalName : TowerDefensePlant.SignalName
+	{
+	}
+
+	public FireComponent fireComponent;
+
+	public ProduceComponent produceComponent;
+
+	public GrowUpComponent growUpComponent;
+
+	private double _produceInterval = 25.0;
+
+	private int _sunNum = 15;
+
+	private double _growUpTime = 60.0;
+
+	private double _fireInterval = 3.0;
+
+	private int _fireNum = 1;
+
+	private string _projectileName = "Sunshroom";
+
+	private string _skinName = "Default";
+
+	[Export(PropertyHint.None, "")]
+	public double produceInterval
+	{
+		get
+		{
+			return _produceInterval;
+		}
+		set
+		{
+			_produceInterval = value;
+			if (IsNodeReady() && this.produceComponent != null)
+			{
+				ProduceComponent produceComponent = this.produceComponent;
+				if (produceComponent != null && !produceComponent.IsReleased)
+				{
+					this.produceComponent.produceInterval = (float)value;
+				}
+			}
+		}
+	}
+
+	[Export(PropertyHint.None, "")]
+	public int sunNum
+	{
+		get
+		{
+			return _sunNum;
+		}
+		set
+		{
+			_sunNum = value;
+			if (IsNodeReady() && this.produceComponent != null)
+			{
+				ProduceComponent produceComponent = this.produceComponent;
+				if (produceComponent != null && !produceComponent.IsReleased)
+				{
+					this.produceComponent.num = value;
+				}
+			}
+		}
+	}
+
+	[Export(PropertyHint.None, "")]
+	public double growUpTime
+	{
+		get
+		{
+			return _growUpTime;
+		}
+		set
+		{
+			_growUpTime = value;
+			if (IsNodeReady() && this.growUpComponent != null)
+			{
+				GrowUpComponent growUpComponent = this.growUpComponent;
+				if (growUpComponent != null && !growUpComponent.IsReleased)
+				{
+					this.growUpComponent.growUpTime[0] = (float)value;
+				}
+			}
+		}
+	}
+
+	[Export(PropertyHint.None, "")]
+	public double fireInterval
+	{
+		get
+		{
+			return _fireInterval;
+		}
+		set
+		{
+			_fireInterval = value;
+			if (IsNodeReady() && this.fireComponent != null)
+			{
+				FireComponent fireComponent = this.fireComponent;
+				if (fireComponent != null && !fireComponent.IsReleased)
+				{
+					this.fireComponent.fireInterval = (float)value;
+				}
+			}
+		}
+	}
+
+	[Export(PropertyHint.None, "")]
+	public int fireNum
+	{
+		get
+		{
+			return _fireNum;
+		}
+		set
+		{
+			_fireNum = value;
+			if (IsNodeReady() && this.fireComponent != null)
+			{
+				FireComponent fireComponent = this.fireComponent;
+				if (fireComponent != null && !fireComponent.IsReleased)
+				{
+					this.fireComponent.fireNum = value;
+				}
+			}
+		}
+	}
+
+	[Export(PropertyHint.None, "")]
+	public string projectileName
+	{
+		get
+		{
+			return _projectileName;
+		}
+		set
+		{
+			_projectileName = value;
+			if (IsNodeReady() && this.fireComponent != null)
+			{
+				FireComponent fireComponent = this.fireComponent;
+				if (fireComponent != null && !fireComponent.IsReleased && this.fireComponent.fireCheckList.Count > 0)
+				{
+					((FireComponentProjectileSingle)this.fireComponent.fireCheckList[0].projectile).projectileName = value;
+				}
+			}
+		}
+	}
+
+	public string skinName
+	{
+		get
+		{
+			return _skinName;
+		}
+		set
+		{
+			_skinName = value;
+			if (IsNodeReady() && this.fireComponent != null)
+			{
+				FireComponent fireComponent = this.fireComponent;
+				if (fireComponent != null && !fireComponent.IsReleased && this.fireComponent.fireCheckList.Count > 0)
+				{
+					((FireComponentProjectileSingle)this.fireComponent.fireCheckList[0].projectile).projectileData.skinName = value;
+				}
+			}
+		}
+	}
+
+	public override void _Ready()
+	{
+		base._Ready();
+		if (!Engine.IsEditorHint())
+		{
+			fireComponent = componentManager.GetRuntime<FireComponent>("character.fire");
+			produceComponent = componentManager.GetRuntime<ProduceComponent>();
+			growUpComponent = componentManager.GetRuntime<GrowUpComponent>();
+			if (growUpComponent != null)
+			{
+				growUpComponent.OnGrow += GowUp;
+			}
+			if (currentCustom.Contains("Custom0"))
+			{
+				skinName = "Santa";
+			}
+		}
+	}
+
+	public override void _ExitTree()
+	{
+		base._ExitTree();
+		GrowUpComponent growUpComponent = this.growUpComponent;
+		if (growUpComponent != null && !growUpComponent.IsReleased)
+		{
+			this.growUpComponent.OnGrow -= GowUp;
+		}
+	}
+
+	public override void OnCustomSwitched(string customKey)
+	{
+		if (customKey == "Custom0")
+		{
+			skinName = "Santa";
+		}
+		else
+		{
+			skinName = "Default";
+		}
+	}
+
+	public virtual void GowUp(int reach)
+	{
+		if (reach == 0)
+		{
+			sunNum = 25;
+			produceComponent.num = sunNum;
+			FireComponentProjectileSingle fireComponentProjectileSingle = (FireComponentProjectileSingle)fireComponent.fireCheckList[0].projectile;
+			fireComponentProjectileSingle.projectileData = (TowerDefenseProjectileCreateData)fireComponentProjectileSingle.projectileData.Duplicate(deep: true);
+			fireComponentProjectileSingle.projectileData.baseDamage = 80.0;
+			fireComponentProjectileSingle.projectileData.scale = new Vector2(1.5f, 1.5f);
+		}
+	}
+
+	protected internal override void OnHypnosisStateChanged()
+	{
+		base.OnHypnosisStateChanged();
+		produceComponent.produceType = (instance.hypnoses ? "BrainSun" : "Sun");
+	}
+
+	public override Dictionary ExportVariantSave()
+	{
+		return new Dictionary
+		{
+			{ "produceInterval", produceInterval },
+			{ "sunNum", sunNum },
+			{ "growUpTime", growUpTime },
+			{ "fireNum", fireNum },
+			{ "projectileName", projectileName },
+			{ "skinName", skinName },
+			{ "fireInterval", fireInterval }
+		};
+	}
+
+	public override void ImportVariantSave(Dictionary data)
+	{
+		produceInterval = data.GetValueOrDefault("produceInterval", 25.0).AsDouble();
+		sunNum = data.GetValueOrDefault("sunNum", 15).AsInt32();
+		growUpTime = data.GetValueOrDefault("growUpTime", 60.0).AsDouble();
+		fireNum = data.GetValueOrDefault("fireNum", 1).AsInt32();
+		projectileName = data.GetValueOrDefault("projectileName", "Sunshroom").AsString();
+		skinName = data.GetValueOrDefault("skinName", "Default").AsString();
+		fireInterval = data.GetValueOrDefault("fireInterval", 3.0).AsDouble();
+	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	internal new static List<MethodInfo> GetGodotMethodList()
+	{
+		return new List<MethodInfo>(7)
+		{
+			new MethodInfo(MethodName._Ready, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null),
+			new MethodInfo(MethodName._ExitTree, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null),
+			new MethodInfo(MethodName.OnCustomSwitched, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
+			{
+				new PropertyInfo(Variant.Type.String, "customKey", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
+			}, null),
+			new MethodInfo(MethodName.GowUp, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
+			{
+				new PropertyInfo(Variant.Type.Int, "reach", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
+			}, null),
+			new MethodInfo(MethodName.OnHypnosisStateChanged, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null),
+			new MethodInfo(MethodName.ExportVariantSave, new PropertyInfo(Variant.Type.Dictionary, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, null, null),
+			new MethodInfo(MethodName.ImportVariantSave, new PropertyInfo(Variant.Type.Nil, "", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false), MethodFlags.Normal, new List<PropertyInfo>
+			{
+				new PropertyInfo(Variant.Type.Dictionary, "data", PropertyHint.None, "", PropertyUsageFlags.Default, exported: false)
+			}, null)
+		};
+	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	protected override bool InvokeGodotClassMethod(in godot_string_name method, NativeVariantPtrArgs args, out godot_variant ret)
+	{
+		if (method == MethodName._Ready && args.Count == 0)
+		{
+			_Ready();
+			ret = default;
+			return true;
+		}
+		if (method == MethodName._ExitTree && args.Count == 0)
+		{
+			_ExitTree();
+			ret = default;
+			return true;
+		}
+		if (method == MethodName.OnCustomSwitched && args.Count == 1)
+		{
+			OnCustomSwitched(VariantUtils.ConvertTo<string>(in args[0]));
+			ret = default;
+			return true;
+		}
+		if (method == MethodName.GowUp && args.Count == 1)
+		{
+			GowUp(VariantUtils.ConvertTo<int>(in args[0]));
+			ret = default;
+			return true;
+		}
+		if (method == MethodName.OnHypnosisStateChanged && args.Count == 0)
+		{
+			OnHypnosisStateChanged();
+			ret = default;
+			return true;
+		}
+		if (method == MethodName.ExportVariantSave && args.Count == 0)
+		{
+			ret = VariantUtils.CreateFrom<Dictionary>(ExportVariantSave());
+			return true;
+		}
+		if (method == MethodName.ImportVariantSave && args.Count == 1)
+		{
+			ImportVariantSave(VariantUtils.ConvertTo<Dictionary>(in args[0]));
+			ret = default;
+			return true;
+		}
+		return base.InvokeGodotClassMethod(in method, args, out ret);
+	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	protected override bool HasGodotClassMethod(in godot_string_name method)
+	{
+		if (method == MethodName._Ready)
+		{
+			return true;
+		}
+		if (method == MethodName._ExitTree)
+		{
+			return true;
+		}
+		if (method == MethodName.OnCustomSwitched)
+		{
+			return true;
+		}
+		if (method == MethodName.GowUp)
+		{
+			return true;
+		}
+		if (method == MethodName.OnHypnosisStateChanged)
+		{
+			return true;
+		}
+		if (method == MethodName.ExportVariantSave)
+		{
+			return true;
+		}
+		if (method == MethodName.ImportVariantSave)
+		{
+			return true;
+		}
+		return base.HasGodotClassMethod(in method);
+	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	protected override bool SetGodotClassPropertyValue(in godot_string_name name, in godot_variant value)
+	{
+		if (name == PropertyName.produceInterval)
+		{
+			produceInterval = VariantUtils.ConvertTo<double>(in value);
+			return true;
+		}
+		if (name == PropertyName.sunNum)
+		{
+			sunNum = VariantUtils.ConvertTo<int>(in value);
+			return true;
+		}
+		if (name == PropertyName.growUpTime)
+		{
+			growUpTime = VariantUtils.ConvertTo<double>(in value);
+			return true;
+		}
+		if (name == PropertyName.fireInterval)
+		{
+			fireInterval = VariantUtils.ConvertTo<double>(in value);
+			return true;
+		}
+		if (name == PropertyName.fireNum)
+		{
+			fireNum = VariantUtils.ConvertTo<int>(in value);
+			return true;
+		}
+		if (name == PropertyName.projectileName)
+		{
+			projectileName = VariantUtils.ConvertTo<string>(in value);
+			return true;
+		}
+		if (name == PropertyName.skinName)
+		{
+			skinName = VariantUtils.ConvertTo<string>(in value);
+			return true;
+		}
+		if (name == PropertyName._produceInterval)
+		{
+			_produceInterval = VariantUtils.ConvertTo<double>(in value);
+			return true;
+		}
+		if (name == PropertyName._sunNum)
+		{
+			_sunNum = VariantUtils.ConvertTo<int>(in value);
+			return true;
+		}
+		if (name == PropertyName._growUpTime)
+		{
+			_growUpTime = VariantUtils.ConvertTo<double>(in value);
+			return true;
+		}
+		if (name == PropertyName._fireInterval)
+		{
+			_fireInterval = VariantUtils.ConvertTo<double>(in value);
+			return true;
+		}
+		if (name == PropertyName._fireNum)
+		{
+			_fireNum = VariantUtils.ConvertTo<int>(in value);
+			return true;
+		}
+		if (name == PropertyName._projectileName)
+		{
+			_projectileName = VariantUtils.ConvertTo<string>(in value);
+			return true;
+		}
+		if (name == PropertyName._skinName)
+		{
+			_skinName = VariantUtils.ConvertTo<string>(in value);
+			return true;
+		}
+		return base.SetGodotClassPropertyValue(in name, in value);
+	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	protected override bool GetGodotClassPropertyValue(in godot_string_name name, out godot_variant value)
+	{
+		double from;
+		if (name == PropertyName.produceInterval)
+		{
+			from = produceInterval;
+			value = VariantUtils.CreateFrom(in from);
+			return true;
+		}
+		int from2;
+		if (name == PropertyName.sunNum)
+		{
+			from2 = sunNum;
+			value = VariantUtils.CreateFrom(in from2);
+			return true;
+		}
+		if (name == PropertyName.growUpTime)
+		{
+			from = growUpTime;
+			value = VariantUtils.CreateFrom(in from);
+			return true;
+		}
+		if (name == PropertyName.fireInterval)
+		{
+			from = fireInterval;
+			value = VariantUtils.CreateFrom(in from);
+			return true;
+		}
+		if (name == PropertyName.fireNum)
+		{
+			from2 = fireNum;
+			value = VariantUtils.CreateFrom(in from2);
+			return true;
+		}
+		string from3;
+		if (name == PropertyName.projectileName)
+		{
+			from3 = projectileName;
+			value = VariantUtils.CreateFrom(in from3);
+			return true;
+		}
+		if (name == PropertyName.skinName)
+		{
+			from3 = skinName;
+			value = VariantUtils.CreateFrom(in from3);
+			return true;
+		}
+		if (name == PropertyName._produceInterval)
+		{
+			value = VariantUtils.CreateFrom(in _produceInterval);
+			return true;
+		}
+		if (name == PropertyName._sunNum)
+		{
+			value = VariantUtils.CreateFrom(in _sunNum);
+			return true;
+		}
+		if (name == PropertyName._growUpTime)
+		{
+			value = VariantUtils.CreateFrom(in _growUpTime);
+			return true;
+		}
+		if (name == PropertyName._fireInterval)
+		{
+			value = VariantUtils.CreateFrom(in _fireInterval);
+			return true;
+		}
+		if (name == PropertyName._fireNum)
+		{
+			value = VariantUtils.CreateFrom(in _fireNum);
+			return true;
+		}
+		if (name == PropertyName._projectileName)
+		{
+			value = VariantUtils.CreateFrom(in _projectileName);
+			return true;
+		}
+		if (name == PropertyName._skinName)
+		{
+			value = VariantUtils.CreateFrom(in _skinName);
+			return true;
+		}
+		return base.GetGodotClassPropertyValue(in name, out value);
+	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	internal new static List<PropertyInfo> GetGodotPropertyList()
+	{
+		return new List<PropertyInfo>
+		{
+			new PropertyInfo(Variant.Type.Float, PropertyName._produceInterval, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false),
+			new PropertyInfo(Variant.Type.Float, PropertyName.produceInterval, PropertyHint.None, "", PropertyUsageFlags.Default | PropertyUsageFlags.ScriptVariable, exported: true),
+			new PropertyInfo(Variant.Type.Int, PropertyName._sunNum, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false),
+			new PropertyInfo(Variant.Type.Int, PropertyName.sunNum, PropertyHint.None, "", PropertyUsageFlags.Default | PropertyUsageFlags.ScriptVariable, exported: true),
+			new PropertyInfo(Variant.Type.Float, PropertyName._growUpTime, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false),
+			new PropertyInfo(Variant.Type.Float, PropertyName.growUpTime, PropertyHint.None, "", PropertyUsageFlags.Default | PropertyUsageFlags.ScriptVariable, exported: true),
+			new PropertyInfo(Variant.Type.Float, PropertyName._fireInterval, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false),
+			new PropertyInfo(Variant.Type.Float, PropertyName.fireInterval, PropertyHint.None, "", PropertyUsageFlags.Default | PropertyUsageFlags.ScriptVariable, exported: true),
+			new PropertyInfo(Variant.Type.Int, PropertyName._fireNum, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false),
+			new PropertyInfo(Variant.Type.Int, PropertyName.fireNum, PropertyHint.None, "", PropertyUsageFlags.Default | PropertyUsageFlags.ScriptVariable, exported: true),
+			new PropertyInfo(Variant.Type.String, PropertyName._projectileName, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false),
+			new PropertyInfo(Variant.Type.String, PropertyName.projectileName, PropertyHint.None, "", PropertyUsageFlags.Default | PropertyUsageFlags.ScriptVariable, exported: true),
+			new PropertyInfo(Variant.Type.String, PropertyName._skinName, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false),
+			new PropertyInfo(Variant.Type.String, PropertyName.skinName, PropertyHint.None, "", PropertyUsageFlags.ScriptVariable, exported: false)
+		};
+	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	protected override void SaveGodotObjectData(GodotSerializationInfo info)
+	{
+		base.SaveGodotObjectData(info);
+		info.AddProperty(PropertyName.produceInterval, Variant.From<double>(produceInterval));
+		info.AddProperty(PropertyName.sunNum, Variant.From<int>(sunNum));
+		info.AddProperty(PropertyName.growUpTime, Variant.From<double>(growUpTime));
+		info.AddProperty(PropertyName.fireInterval, Variant.From<double>(fireInterval));
+		info.AddProperty(PropertyName.fireNum, Variant.From<int>(fireNum));
+		info.AddProperty(PropertyName.projectileName, Variant.From<string>(projectileName));
+		info.AddProperty(PropertyName.skinName, Variant.From<string>(skinName));
+		info.AddProperty(PropertyName._produceInterval, Variant.From(in _produceInterval));
+		info.AddProperty(PropertyName._sunNum, Variant.From(in _sunNum));
+		info.AddProperty(PropertyName._growUpTime, Variant.From(in _growUpTime));
+		info.AddProperty(PropertyName._fireInterval, Variant.From(in _fireInterval));
+		info.AddProperty(PropertyName._fireNum, Variant.From(in _fireNum));
+		info.AddProperty(PropertyName._projectileName, Variant.From(in _projectileName));
+		info.AddProperty(PropertyName._skinName, Variant.From(in _skinName));
+	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	protected override void RestoreGodotObjectData(GodotSerializationInfo info)
+	{
+		base.RestoreGodotObjectData(info);
+		if (info.TryGetProperty(PropertyName.produceInterval, out var value))
+		{
+			produceInterval = value.As<double>();
+		}
+		if (info.TryGetProperty(PropertyName.sunNum, out var value2))
+		{
+			sunNum = value2.As<int>();
+		}
+		if (info.TryGetProperty(PropertyName.growUpTime, out var value3))
+		{
+			growUpTime = value3.As<double>();
+		}
+		if (info.TryGetProperty(PropertyName.fireInterval, out var value4))
+		{
+			fireInterval = value4.As<double>();
+		}
+		if (info.TryGetProperty(PropertyName.fireNum, out var value5))
+		{
+			fireNum = value5.As<int>();
+		}
+		if (info.TryGetProperty(PropertyName.projectileName, out var value6))
+		{
+			projectileName = value6.As<string>();
+		}
+		if (info.TryGetProperty(PropertyName.skinName, out var value7))
+		{
+			skinName = value7.As<string>();
+		}
+		if (info.TryGetProperty(PropertyName._produceInterval, out var value8))
+		{
+			_produceInterval = value8.As<double>();
+		}
+		if (info.TryGetProperty(PropertyName._sunNum, out var value9))
+		{
+			_sunNum = value9.As<int>();
+		}
+		if (info.TryGetProperty(PropertyName._growUpTime, out var value10))
+		{
+			_growUpTime = value10.As<double>();
+		}
+		if (info.TryGetProperty(PropertyName._fireInterval, out var value11))
+		{
+			_fireInterval = value11.As<double>();
+		}
+		if (info.TryGetProperty(PropertyName._fireNum, out var value12))
+		{
+			_fireNum = value12.As<int>();
+		}
+		if (info.TryGetProperty(PropertyName._projectileName, out var value13))
+		{
+			_projectileName = value13.As<string>();
+		}
+		if (info.TryGetProperty(PropertyName._skinName, out var value14))
+		{
+			_skinName = value14.As<string>();
+		}
+	}
+}
